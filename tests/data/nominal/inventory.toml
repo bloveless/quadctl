@@ -1,0 +1,20 @@
+[[nodes]]
+name       = "node01"
+host       = "node01"
+user       = "appuser"
+ssh_key    = "~/.ssh/id_ed25519"
+remote_path = "/etc/containers/systemd"
+tags       = ["gateway", "database"]
+
+  [[nodes.quadlets]]
+  name = "parent-container"
+  file = "node01/parent.container"
+  depends_on = ["parent-network", "parent-volume"]
+
+  [[nodes.quadlets]]
+  name = "parent-network"
+  file = "node01/parent.network"
+
+  [[nodes.quadlets]]
+  name = "parent-volume"
+  file = "node01/parent.volume"
