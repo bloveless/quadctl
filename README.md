@@ -1,5 +1,7 @@
 # quadctl
 
+[![codecov](https://codecov.io/gh/bloveless/quadctl/graph/badge.svg?token=N0956JNGRS)](https://codecov.io/gh/bloveless/quadctl)
+
 A small CLI for managing quadlets on remote nodes.
 
 See tests/data for example quadlet definitions and inventory.toml examples.
