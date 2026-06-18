@@ -11,7 +11,7 @@ pub enum Error {
     #[error("unable to read file {0}: {1}")]
     UnableToReadFile(String, std::io::Error),
     #[error("toml parsing error: {0}")]
-    TomlError(#[from] toml::de::Error),
+    TomlParse(#[from] toml::de::Error),
     #[error("unknown dependency for {0}: {1}")]
     DependencyUnknown(String, String),
 }
@@ -23,6 +23,7 @@ pub struct Quadlet {
     pub depends_on: Option<Vec<String>>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Node {
     pub name: String,
@@ -39,6 +40,7 @@ pub struct Inventory {
     pub nodes: Vec<Node>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Config {
     pub config_dir: PathBuf,
@@ -48,7 +50,7 @@ pub struct Config {
 
 pub fn load_config(config_dir: &PathBuf) -> Result<Config, Error> {
     let inventory_file = std::fs::read_to_string(config_dir.join("inventory.toml"))
-        .map_err(|e| Error::UnableToReadInventory(e))?;
+        .map_err(Error::UnableToReadInventory)?;
     let inventory: Inventory = toml::from_str(&inventory_file)?;
     let node_hashes = compute_hashes(config_dir, &inventory)?;
     Ok(Config {
@@ -66,7 +68,7 @@ fn compute_hashes(
     for node in &inventory.nodes {
         let mut quadlet_hashes = std::collections::HashMap::new();
         for q in &node.quadlets {
-            compute_hash(&node, &mut quadlet_hashes, config_dir, q)?;
+            compute_hash(node, &mut quadlet_hashes, config_dir, q)?;
         }
         node_hashes.insert(node.name.clone(), quadlet_hashes);
     }
