@@ -19,11 +19,15 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # ratchet:Swatinem/rust-cache@v2
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
       - name: Format check
         run: cargo fmt -- --check
       - name: Clippy
         run: cargo clippy -- -D warnings
-      - name: Test
-        run: cargo test -- --nocapture
-      - name: Build
-        run: cargo build
+      - name: Run coverage
+        run: cargo tarpaulin --out xml --verbose
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # ratchet:codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
