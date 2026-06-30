@@ -1,9 +1,8 @@
+use clap::{Parser, Subcommand};
+use quadctl::{config, remote_check, ssh};
 use std::path::{Path, PathBuf};
 
-use clap::{Parser, Subcommand};
-use openssh::Session;
-
-mod config;
+use crate::ssh::SshRemoteConnector;
 
 #[derive(Parser)]
 #[command(name = "quadctl", about = "Quadlet control tool")]
@@ -36,18 +35,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match &cli.command {
         Some(Commands::RemoteCheck) => {
-            for node in &config.inventory.nodes {
-                let session = Session::connect_mux(
-                    format!("{}@{}", node.user, node.host),
-                    openssh::KnownHosts::Strict,
-                )
-                .await?;
-                let ls = session.command("ls").output().await?;
-                eprintln!(
-                    "{}",
-                    String::from_utf8(ls.stdout).expect("server output was not valid UTF-8")
-                );
-            }
+            let remote_connector = SshRemoteConnector {};
+            remote_check::remote_check(&remote_connector, &config).await?;
         }
         None => {
             for (node, quadlet_hashes) in &config.node_hashes {

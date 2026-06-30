@@ -13,10 +13,11 @@ lint:
     cargo clippy -- -D warnings
 
 test:
-    cargo test
+    cargo nextest run
 
-test-cover:
-    cargo tarpaulin --ignore-tests
+cover:
+    # cargo install cargo-tarpaulin
+    cargo tarpaulin --ignore-tests --out html
 
 pin:
     ratchet pin .github/workflows/*.yml

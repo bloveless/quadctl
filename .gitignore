@@ -12,3 +12,6 @@ target
 # My quadlets manifests used for development and testing
 # Eventually, the goal is to store these in a separate repo and have this tool be used to deploy them
 manifests
+
+# Coverage html reports
+tarpaulin-report.html

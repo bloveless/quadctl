@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -8,18 +8,18 @@ use thiserror::Error;
 pub enum Error {
     #[error("unable to read inventory.toml: {0}")]
     UnableToReadInventory(std::io::Error),
-    #[error("unable to read file {0}: {1}")]
-    UnableToReadFile(String, std::io::Error),
     #[error("toml parsing error: {0}")]
     TomlParse(#[from] toml::de::Error),
     #[error("unknown dependency for {0}: {1}")]
     DependencyUnknown(String, String),
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Quadlet {
     pub name: String,
-    pub file: String,
+    pub file: PathBuf,
     pub depends_on: Option<Vec<String>>,
 }
 
@@ -30,7 +30,8 @@ pub struct Node {
     pub host: String,
     pub user: String,
     pub ssh_key: String,
-    pub remote_path: String,
+    pub remote_path: PathBuf,
+    pub local_path: PathBuf,
     pub tags: Vec<String>,
     pub quadlets: Vec<Quadlet>,
 }
@@ -85,8 +86,9 @@ fn compute_hash(
         return Ok(());
     }
 
-    let quad_file = config_dir.join(&q.file);
-    let hash = hash_file(&quad_file)?;
+    let quad_file = config_dir.join(&node.local_path).join(&q.file);
+    let quad_data = std::fs::read(&quad_file)?;
+    let hash = hex::encode(Sha256::digest(quad_data));
     quadlet_hashes.insert(q.name.clone(), hash.clone());
 
     // DFS for computing hashes of dependencies
@@ -112,16 +114,6 @@ fn compute_hash(
     }
 
     Ok(())
-}
-
-fn hash_file(path: &PathBuf) -> Result<String, Error> {
-    let file_contents = fs::read_to_string(path)
-        .map_err(|e| Error::UnableToReadFile(path.to_string_lossy().into(), e))?;
-
-    let mut hasher = Sha256::new();
-    hasher.update(file_contents.as_bytes());
-    let hash = hasher.finalize();
-    Ok(hex::encode(hash))
 }
 
 #[cfg(test)]
